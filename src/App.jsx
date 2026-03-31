@@ -1,0 +1,189 @@
+import { useState } from "react";
+import InputSection from "./components/InputSection";
+import NotesDisplay from "./components/NotesDisplay";
+import ExamQuestions from "./components/ExamQuestions";
+import { searchWikipedia, fetchArticle } from "./services/wikipedia";
+import { generateNotes } from "./services/notes";
+
+function App() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [notes, setNotes] = useState(null);
+
+  const handleGenerate = async (input) => {
+    setLoading(true);
+    setError(null);
+    setNotes(null);
+
+    try {
+      let title = input;
+      let content = input;
+
+      // If input is short (topic), fetch from Wikipedia
+      if (input.split(' ').length < 10) {
+        title = await searchWikipedia(input);
+        const article = await fetchArticle(title);
+        content = article.extract || input;
+      }
+
+      const generatedNotes = await generateNotes(title, content);
+      setNotes(generatedNotes);
+    } catch (err) {
+      console.log("ERROR:", err);
+      setError("Something went wrong. Please try again!");
+    }
+
+    setLoading(false);
+  };
+
+  return (
+    <div style={{
+      minHeight: "100vh",
+      background: "#050510",
+      fontFamily: "'Segoe UI', sans-serif",
+      color: "white",
+      overflowX: "hidden"
+    }}>
+
+      {/* Background */}
+      <div style={{
+        position: "fixed", top: 0, left: 0,
+        width: "100%", height: "100%", zIndex: 0,
+        background: "radial-gradient(ellipse at 20% 50%, rgba(102,126,234,0.12) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(67,233,123,0.08) 0%, transparent 60%)"
+      }} />
+
+      {/* Header */}
+      <div style={{
+        position: "relative", zIndex: 10,
+        display: "flex", alignItems: "center",
+        justifyContent: "space-between",
+        padding: "18px 40px",
+        borderBottom: "1px solid rgba(255,255,255,0.06)",
+        backdropFilter: "blur(20px)",
+        background: "rgba(5,5,16,0.8)"
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div style={{
+            width: "42px", height: "42px",
+            background: "linear-gradient(135deg, #43e97b, #38f9d7)",
+            borderRadius: "13px", display: "flex",
+            alignItems: "center", justifyContent: "center",
+            fontSize: "20px", boxShadow: "0 4px 20px rgba(67,233,123,0.35)"
+          }}>📝</div>
+          <div>
+            <div style={{
+              fontSize: "20px", fontWeight: "800",
+              background: "linear-gradient(135deg, #43e97b, #38f9d7)",
+              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent"
+            }}>Study Notes Generator</div>
+            <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", marginTop: "1px" }}>
+              Part of Arivu AI
+            </div>
+          </div>
+        </div>
+        <a href="https://arivu-two.vercel.app" style={{
+          background: "rgba(67,233,123,0.1)",
+          border: "1px solid rgba(67,233,123,0.25)",
+          borderRadius: "20px", padding: "6px 16px",
+          color: "#43e97b", fontSize: "12px",
+          fontWeight: "600", textDecoration: "none"
+        }}>← Back to Arivu AI</a>
+      </div>
+
+      {/* Hero */}
+      <div style={{
+        position: "relative", zIndex: 10,
+        textAlign: "center", padding: "60px 20px 40px"
+      }}>
+        <div style={{
+          display: "inline-block",
+          background: "rgba(67,233,123,0.1)",
+          border: "1px solid rgba(67,233,123,0.25)",
+          borderRadius: "20px", padding: "6px 18px",
+          color: "#43e97b", fontSize: "12px",
+          fontWeight: "600", marginBottom: "20px"
+        }}>
+          🎓 Free for all students — No login required
+        </div>
+        <h1 style={{
+          fontSize: "48px", fontWeight: "800",
+          lineHeight: 1.1, margin: "0 0 16px"
+        }}>
+          Generate Perfect<br/>
+          <span style={{
+            background: "linear-gradient(135deg, #43e97b, #38f9d7)",
+            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent"
+          }}>Study Notes Instantly</span>
+        </h1>
+        <p style={{
+          color: "rgba(255,255,255,0.4)", fontSize: "17px",
+          maxWidth: "500px", margin: "0 auto 40px", lineHeight: 1.7
+        }}>
+          Type any topic or paste any text — AI generates beautiful structured notes in seconds!
+        </p>
+
+        <InputSection onGenerate={handleGenerate} loading={loading} />
+      </div>
+
+      {/* Loading */}
+      {loading && (
+        <div style={{ position: "relative", zIndex: 10, textAlign: "center", padding: "60px" }}>
+          <div style={{
+            display: "inline-block", width: "48px", height: "48px",
+            border: "3px solid rgba(67,233,123,0.2)",
+            borderTop: "3px solid #43e97b",
+            borderRadius: "50%", animation: "spin 0.8s linear infinite"
+          }} />
+          <p style={{ color: "rgba(255,255,255,0.4)", marginTop: "16px", fontSize: "15px" }}>
+            Generating your study notes...
+          </p>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      )}
+
+      {/* Error */}
+      {error && (
+        <div style={{
+          position: "relative", zIndex: 10,
+          maxWidth: "600px", margin: "20px auto",
+          background: "rgba(255,59,59,0.08)",
+          border: "1px solid rgba(255,59,59,0.25)",
+          borderRadius: "16px", padding: "16px 24px",
+          color: "#ff6b6b", textAlign: "center"
+        }}>⚠️ {error}</div>
+      )}
+
+      {/* Results */}
+      <div style={{ position: "relative", zIndex: 10, maxWidth: "1100px", margin: "0 auto", padding: "0 20px 80px" }}>
+        {notes && (
+          <>
+            <NotesDisplay notes={notes} />
+            <ExamQuestions questions={notes.examQuestions} />
+          </>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div style={{
+        position: "relative", zIndex: 10,
+        borderTop: "1px solid rgba(255,255,255,0.06)",
+        padding: "32px 40px", textAlign: "center"
+      }}>
+        <div style={{
+          fontSize: "18px", fontWeight: "800",
+          background: "linear-gradient(135deg, #43e97b, #38f9d7)",
+          WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+          marginBottom: "8px"
+        }}>Study Notes Generator</div>
+        <p style={{ color: "rgba(255,255,255,0.25)", fontSize: "13px", marginBottom: "4px" }}>
+          Built with ❤️ by Sanjay Shriram — Part of Arivu AI
+        </p>
+        <p style={{ color: "rgba(255,255,255,0.15)", fontSize: "12px" }}>
+          © 2026 Arivu AI. Free for all students forever.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+export default App;
