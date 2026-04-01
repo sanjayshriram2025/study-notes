@@ -79,8 +79,8 @@ ${notes.examQuestions.map((q, i) => `${i + 1}. ${q}`).join('\n')}
 
       {/* Sections */}
       <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+        display: "flex",
+        flexDirection: "column",
         gap: "20px"
       }}>
         {sections.map((section) => (
